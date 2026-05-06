@@ -40,7 +40,7 @@ const create = async (userId, data) =>{
 
     const result = await pool.query(
         `INSERT INTO photovoltaic_system
-        (id_user, system_name, peak_power_w, panel_orientation,
+        (id_user, system_name, peak_power_kwp, panel_orientation,
         tilt_angle_deg, system_type, installation_date, system_status)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
         RETURNING *`,
@@ -89,10 +89,10 @@ const update = async (id, userId, data) =>{
 };
 
 const updateStatus = async (id, status) =>{
-    const result = pool.query(
+    const result = await pool.query(
         `UPDATE photovoltaic_system
-        SET system_status =$1
-        WHERE id_system =$2
+        SET system_status = $1
+        WHERE id_system = $2
         RETURNING id_system, system_status`,
         [status, id]
     );
@@ -114,17 +114,17 @@ const getDashboardData = async (id) =>{
         `SELECT 
             ps.id_system,
             ps.system_name,
-            ps.peak_power_w,
+            ps.peak_power_kwp,
             ps.system_type,
             
-            em.recorder_at AS last_recorded_at,
+            em.recorded_at AS last_recorded_at,
             em.power_w AS current_power_w,
             em.voltage_v AS current_voltage_v,
             em.current_a AS current_current_a,
             em.temperature_c AS current_temperature_c,
             
             COALESCE(daily.produced_kwh, 0) AS produced_today_kwh,
-            COALESCE(daily.consumed_kwh, 0) AS consumed_today_kwh,
+            COALESCE(daily.consumed_kwh, 0) AS consumed_today_kwh
             
         FROM photovoltaic_system ps
         LEFT JOIN LATERAL(
@@ -139,7 +139,7 @@ const getDashboardData = async (id) =>{
         AND daily.summary_type = 'daily' 
         AND DATE(daily.time_start) = CURRENT_DATE
         
-        WHERE ps.id_system =$1`,
+        WHERE ps.id_system = $1`,
         [id]
     );
     return result.rows[0];

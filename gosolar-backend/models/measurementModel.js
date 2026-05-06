@@ -2,7 +2,7 @@ const pool = require('../config/db');
 
 const addMeasurement = async (systemId, data) =>{
     const {
-        recoreded_at,
+        recorded_at,
         voltage_v,
         current_a,
         power_w,
@@ -30,8 +30,8 @@ const getHistory = async (systemId, limit = 100 ,offset= 0)=>{
     const result = await pool.query(
         `SELECT * FROM energy_measurements
         WHERE id_system = $1
-        OREDR BY recorded_at DESC
-        LIMIT &2 OFFSET $3`,
+        ORDER BY recorded_at DESC
+        LIMIT $2 OFFSET $3`,
         [systemId, limit, offset]
     );
     return result.rows;
@@ -42,7 +42,7 @@ const getHistoryByPeriod = async (systemId, startDate, endDate) =>{
         `SELECT * FROM energy_measurements
         WHERE id_system = $1
         AND recorded_at >= $2
-        AND recorded-at <= $3
+        AND recorded_at <= $3
         ORDER BY recorded_at ASC`,
         [systemId, startDate, endDate]
     );
@@ -76,7 +76,7 @@ const addSummary = async (systemId, data) => {
 
     const result = await pool.query(
         `INSERT INTO energy_measurements_summary
-        (id_systen, summary_type, time_start, avg_voltage_v, avg_current_a, 
+        (id_system, summary_type, time_start, avg_voltage_v, avg_current_a, 
         avg_power_w, min_temperature_c, max_temperature_c, avg_temperature_c, 
         produced_kwh, consumed_kwh)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -168,7 +168,7 @@ const getLatestSummary = async (systemId, summaryType) =>{
 };
 
 const getDailyProduction = async (systemId, startDate, endDate) =>{
-    const result = await pool.query(\
+    const result = await pool.query(
         `SELECT 
             DATE(time_start) AS day,
             SUM(produced_kwh) AS total_produced_kwh,
@@ -191,7 +191,7 @@ const getMonthlyProduction = async (systemId, year) =>{
         `SELECT 
             EXTRACT (MONTH FROM time_start) AS month,
             SUM(produced_kwh) AS total_produced_kwh,
-            SUM(consuumed_kwh) AS total_consumed_kwh,
+            SUM(consumed_kwh) AS total_consumed_kwh,
             AVG(avg_temperature_c) AS avg_temperature_c
         FROM energy_measurements_summary
         WHERE id_system = $1
@@ -209,7 +209,7 @@ const getEnergyVsConsumption = async (systemId, startDate, endDate) =>{
         `SELECT 
             DATE(time_start) AS day,
             SUM(produced_kwh) AS total_produced_kwh,
-            SUM(consuumed_kwh) AS total_consumed_kwh,
+            SUM(consumed_kwh) AS total_consumed_kwh,
             SUM(produced_kwh) - SUM(consumed_kwh) AS surplus_kwh
         FROM energy_measurements_summary
         WHERE id_system = $1
