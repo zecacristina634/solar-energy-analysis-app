@@ -1,4 +1,3 @@
-const { use } = require('react');
 const pool = require('../config/db');
 
 // appliance_catalog
@@ -18,7 +17,7 @@ const getAllCatalog = async (category = null, type = null)=>{
     }
 
     if (conditions.length > 0){
-        query += `WHERE `+ conditions.join(` AND `);
+        query += ` WHERE `+ conditions.join(` AND `);
     }
 
     query += ` ORDER BY appliance_type, appliance_category, appliance_name`;
@@ -44,7 +43,7 @@ const getConstantByUser =async (userId) =>{
         ac.nominal_power_w AS catalog_power_w,
         ac.estimated_consumption_kwh AS catalog_consumption_kwh,
         ac.usage_time_minutes AS catalog_usage_time
-        FROM user_constant_appliance uca
+        FROM user_constant_appliances uca
         LEFT JOIN appliance_catalog ac
         ON uca.id_catalog_appliance = ac.id_catalog_appliance
         WHERE uca.id_user = $1
