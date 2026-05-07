@@ -35,14 +35,16 @@ const create = async (userId, data) =>{
         panel_orientation,
         tilt_angle_deg,
         system_type,
-        installation_date
+        installation_date,
+        latitude,
+        longitude
     } = data;
 
     const result = await pool.query(
         `INSERT INTO photovoltaic_system
         (id_user, system_name, peak_power_kwp, panel_orientation,
-        tilt_angle_deg, system_type, installation_date, system_status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
+        tilt_angle_deg, system_type, installation_date,latitude, longitude, system_status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active')
         RETURNING *`,
         [
             userId,
@@ -51,7 +53,9 @@ const create = async (userId, data) =>{
             panel_orientation || null,
             tilt_angle_deg || null,
             system_type,
-            installation_date || null
+            installation_date || null,
+            latitude || null,
+            longitude || null
         ]
     );
     return result.rows[0];
@@ -63,7 +67,9 @@ const update = async (id, userId, data) =>{
         peak_power_kwp,
         panel_orientation,
         tilt_angle_deg,
-        installation_date
+        installation_date,
+        latitude,
+        longitude
     } = data;
 
     const result = await pool.query(
@@ -72,8 +78,10 @@ const update = async (id, userId, data) =>{
             peak_power_kwp = $2,
             panel_orientation = $3,
             tilt_angle_deg = $4,
-            installation_date = $5
-        WHERE id_system = $6 AND  id_user= $7
+            installation_date = $5,
+            latitude = $6,
+            longitude = $7
+        WHERE id_system = $8 AND  id_user= $9
         RETURNING *`,
         [
             system_name || null,
@@ -81,6 +89,8 @@ const update = async (id, userId, data) =>{
             panel_orientation || null,
             tilt_angle_deg || null,
             installation_date || null,
+            latitude || null,
+            longitude || null,
             id,
             userId
         ]
