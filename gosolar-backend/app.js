@@ -19,14 +19,14 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
-app.use('./auth', authRoutes);
-app.use('./users', userRoutes);
-app.use('./systems', systemRoutes);
-app.use('./measurements', measurementRoutes);
-app.use('./appliances', applianceRoutes);
-app.use('./recommendations', recommendationRoutes);
-app.use('./forecast', forecastRoutes);
-app.use('./reports', reportRoutes);
+app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
+app.use('/systems', systemRoutes);
+app.use('/measurements', measurementRoutes);
+app.use('/appliances', applianceRoutes);
+app.use('/recommendations', recommendationRoutes);
+app.use('/forecast', forecastRoutes);
+app.use('/reports', reportRoutes);
 
 app.get('/', (req,res)=>{
     res.json({message: 'GoSolar API is running'});

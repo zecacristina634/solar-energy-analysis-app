@@ -63,6 +63,15 @@ const findByEmailExcludingId = async (email, id) =>{
     return result.rows[0];
 };
 
+const findByIdWithPassword = async (id) =>{
+    const result = await pool.query(
+        `SELECT * FROM users 
+        WHERE id_user = $1`,
+        [id]
+    );
+    return result.rows[0];
+}
+
 module.exports={
     findByEmail,
     findById,
@@ -70,5 +79,6 @@ module.exports={
     updateProfile,
     updatePassword,
     deleteUser,
-    findByEmailExcludingId
+    findByEmailExcludingId,
+    findByIdWithPassword
 };
