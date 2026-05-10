@@ -34,6 +34,15 @@ const getCatalogById = async (id)=>{
     return result.rows[0];
 };
 
+const getCategories = async () => {
+    const result = await pool.query(
+        `SELECT DISTINCT appliance_category
+        FROM appliance_catalog
+        ORDER BY appliance_category ASC`
+    );
+    return result.rows;
+}
+
 //user_constant_appliances
 const getConstantByUser =async (userId) =>{
     const result = await pool.query(
@@ -246,6 +255,7 @@ const deleteShiftable = async (id, userId) =>{
 module.exports ={
     getAllCatalog,
     getCatalogById,
+    getCategories,
     getConstantByUser,
     addConstant,
     updateConstant,
