@@ -133,8 +133,8 @@ const simulateMeasurement = (date, system, weatherData = {}) => {
     const power_w = Math.max(0, adjustedIrradiance * panelArea * PANEL_EFFICIENCY * PERFORMANCE_RATIO * tempFactor);
 
     // tensiunea si curentul 
-    const voltage_v = parseFloat((48 * (1-0.003 * (panelTemp - TEMP_REFERENCE)) * Math.min(1, irradiance/800)).toFixed(3));
-    const current_a = voltage_v > 0 ? parseFloat((power_w / voltage_v).toFixed(3)) : 0;
+    const voltage_v =irradiance> 50 ? parseFloat((48 * (1-0.003 * (panelTemp - TEMP_REFERENCE)) * Math.min(1, irradiance/800)).toFixed(3)) : 0;
+    const current_a = voltage_v > 1 ? parseFloat((power_w / voltage_v).toFixed(3)) : 0;
 
     return {
         recorded_at: date,
