@@ -1,9 +1,7 @@
 const recommendationModel = require('../models/recommendationModel');
 const systemModel = require('../models/systemModel');
-const measurementModel = require('../models/measurementModel');
-const applianceModel = require('../models/applianceModel');
-const {calculateConstantConsumption} = require('../utils/consumptionCalculator');
-const { parse } = require('dotenv');
+const {generateRecommendations: generateWithAi} = require('../utils/recommendationGenerator');
+const recommendationJob = require('../utils/recommendationJob');
 
 const getRecommendations = async (req, res, next) =>{
     try{
@@ -74,42 +72,16 @@ const generateRecommendations = async (req, res, next) =>{
             return res.status(404).json({message: 'System not found'});
         }
 
-        const latestMeasurement = await measurementModel.getLastMeasurement(req.params.systemId);
-        if(!latestMeasurement){
-            return res.status(404).json({message: 'No measurements found'});
+        const result = await generateWithAi(system, req.user.id_user, true);
+
+        if(result.error && result.recommendations.length === 0){
+            return res.status(200).json({
+                message: result.error,
+                recommendations :[]
+            });
         }
 
-        const constantAppliances = await applianceModel.getConstantByUser(req.user.id_user);
-        const shiftableLoads = await applianceModel.getShiftableByUser(req.user.id_user);
-        
-        const currentPowerW = parseFloat(latestMeasurement.power_w) || 0;
-        const constantConsumptionW = calculateConstantConsumption(constantAppliances, 1) * 1000;
-        const surplusW = currentPowerW - constantConsumptionW;
-
-        //aici avem apel ai
-        const placeholder = {
-            recommendation_type: 'ai_pending',
-            title: 'ai recommendations',
-            message: `Current power: ${Math.round(currentPowerW)}W. Constant consumption: ${Math.round(constantConsumptionW)}W. Surplus: ${Math.round(surplusW)}W. Shiftable loads: ${shiftableLoads.length}.`,
-            estimated_saving_kwh: null,
-            estimated_saving_money: null
-        };
-
-        const saved = await recommendationModel.create(
-            req.user.id_user,
-            req.params.systemId,
-            placeholder
-        );
-
-        res.status(201).json({
-            recommendation: saved,
-            data: {
-                current_power_w: currentPowerW,
-                constant_consumption_w: constantConsumptionW,
-                surplus_w: surplusW,
-                shiftable_loads: shiftableLoads.length
-            }
-        });
+        res.status(201).json(result);
     } catch(err){
         next(err);
     }
@@ -150,6 +122,44 @@ const deleteOldRecommendations = async (req, res, next) =>{
     }
 };
 
+const startAutoRecommendations = async (req, res, next) =>{
+    try{
+        const system = await systemModel.getById(req.params.systemId, req.user.id_user);
+        if (!system) {
+            return res.status(404).json({ message: 'System not found' });
+        }
+
+        if(recommendationJob.isRecommendationJobRunning(system.id_system)){
+            return res.status(400).json({message: 'Auto recommendations already running'});
+        }
+
+        recommendationJob.startRecommendationJob(system.id_system, req.user.id_user);
+
+        res.status(200).json({message: 'Auto recommendations started'});
+    } catch(err){
+        next(err);
+    }
+};
+
+const stopAutoRecommendations = async (req, res, next) =>{
+    try{
+        const system = await systemModel.getById(req.params.systemId, req.user.id_user);
+        if (!system) {
+            return res.status(404).json({ message: 'System not found' });
+        }
+
+        if(!recommendationJob.isRecommendationJobRunning(system.id_system)){
+            return res.status(400).json({message: 'Auto recommendations not running'});
+        }
+
+        recommendationJob.stopRecommendationJob(system.id_system);
+
+        res.status(200).json({message: 'Auto recommendations stopped'});
+    } catch (err){
+        next(err);
+    }
+};
+
 module.exports ={
     getRecommendations,
     getRecommendationsBySystem,
@@ -159,5 +169,7 @@ module.exports ={
     generateRecommendations,
     markAsRead,
     markAllAsRead,
-    deleteOldRecommendations
+    deleteOldRecommendations,
+    startAutoRecommendations,
+    stopAutoRecommendations
 };
