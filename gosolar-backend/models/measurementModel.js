@@ -53,6 +53,8 @@ const getLastMeasurement = async (systemId) =>{
     const result = await pool.query(
         `SELECT * FROM energy_measurements
         WHERE  id_system= $1
+        AND recorded_at <= NOW()
+        AND power_w IS NOT NULL
         ORDER BY recorded_at DESC
         LIMIT 1`,
         [systemId]
