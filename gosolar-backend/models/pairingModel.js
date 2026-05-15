@@ -22,6 +22,15 @@ const findByCode = async (codeValue) =>{
     return result.rows[0];
 };
 
+const findByCodeAny = async (codeValue) =>{
+    const result = await pool.query(
+        `SELECT * FROM pairing_codes
+        WHERE code_value = $1`,
+        [codeValue]
+    );
+    return result.rows[0];
+};
+
 const findActiveBySystem = async (systemId) =>{
     const result = await pool.query(
         `SELECT * FROM pairing_codes
@@ -34,6 +43,17 @@ const findActiveBySystem = async (systemId) =>{
     );
     return result.rows[0];
 };
+
+const assignSystem = async (codeValue, systemId) =>{
+    const result = await pool.query(
+        `UPDATE pairing_codes
+        SET id_system = $1, is_used = true
+        WHERE code_value = $2
+        RETURNING *`,
+        [systemId, codeValue]
+    );
+    return result.rows[0];
+}
 
 const markAsUsed = async (codeValue) =>{
     const result = await pool.query(
@@ -57,7 +77,9 @@ const deleteExpired = async () =>{
 module.exports ={
     create,
     findByCode,
+    findByCodeAny,
     findActiveBySystem,
+    assignSystem,
     markAsUsed,
     deleteExpired
 };
