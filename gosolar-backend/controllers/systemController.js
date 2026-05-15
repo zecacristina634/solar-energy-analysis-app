@@ -154,17 +154,65 @@ const pairSystem = async (req, res, next) =>{
             return res.status(400).json({message: 'Pairing code expired'});
         }
 
-        const updatedSystem = await systemModel.update(code.id_system, null, {});
+        if(code.id_system){
+            await pairingModel.markAsUsed(code_value);
+            const system = await systemModel.getByIdOnly(code.id_system);
+            return res.status(200).json({
+                message: 'Device paired successfully',
+                system
+            });
+        }
 
-        await pairingModel.markAsUsed(code_value);
+        const system = await systemModel.create(req.user.id_user,{
+            system_name: 'Solar System ',
+            system_type: 'real'
+        });
 
-        const system = await systemModel.getByIdOnly(code.id_system);
+        await pairingModel.assignSystem(code_value, system.id_system);
 
         res.status(200).json({
             message: 'Device paired successfully',
             system
         });
     } catch (err){
+        next(err);
+    }
+};
+
+const registerPairingCode = async (req, res, next) =>{
+    try{
+        const {code_value} = req.body;
+        if(!code_value){
+            return res.status(400).json({message: 'Pairing code is required'});
+        }
+
+        const existing = await pairingModel.findByCode(code_value);
+        if(existing){
+            return res.status(200).json({message: 'Code already registered'});
+        }
+
+        const expiresAt = new Date(Date.now() + 5*60*1000);
+        await pairingModel.create(null, code_value, expiresAt);
+
+        res.status(201).json({message: 'Pairing code registered successfully'});
+    } catch(err){
+        next(err);
+    }
+};
+
+const getPairingStatus = async (req, res, next) =>{
+    try{
+        const code = await pairingModel.findByCodeAny(req.params.code);
+        if(!code){
+            return res.status(404).json({message: 'Code not found'});
+        }
+
+        res.status(200).json({
+            is_used: code.is_used,
+            id_system: code.id_system,
+            expires_at: code.expires_at
+        });
+    } catch(err){
         next(err);
     }
 };
@@ -278,6 +326,8 @@ module.exports ={
     updateSystem,
     deleteSystem,
     pairSystem,
+    registerPairingCode,
+    getPairingStatus,
     startSimulation,
     stopSimulation,
     runSimulation
