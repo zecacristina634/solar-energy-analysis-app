@@ -1,10 +1,10 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { colors } from '../../constants/colors';
 
-export default function ShiftableLoads() {
+export default function Insights() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Shiftable Loads</Text>
+      <Text style={styles.text}>Insights</Text>
     </View>
   );
 }
