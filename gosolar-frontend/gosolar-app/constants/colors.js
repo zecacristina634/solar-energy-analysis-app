@@ -1,21 +1,21 @@
 export const colors = {
-  primary: '#120660',      
+  primary: '#0a1628',      
+  primaryDark: '#050d1a',  
+  primaryLight: '#0f1f35', 
   accent: '#7ed957',       
 
-  primaryLight: '#1e0d8c', 
-  accentLight: '#a8e87a',  
+  border: '#1a3050',      
+  borderLight: '#142340',  
 
-  white: '#FFFFFF',
-  background: '#0a0433',   
-  card: '#1a0f5e',         
-  border: '#2a1a8a',       
+  textPrimary: '#ffffff',
+  textSecondary: '#6b8ab0', 
+  textAccent: '#7ed957',    
 
-  textPrimary: '#FFFFFF',  
-  textSecondary: '#a89fd4', 
-  textAccent: '#7ed957',   
+  success: '#7ed957',
+  warning: '#f5a623',
+  error: '#e74c3c',
+  inactive: '#1a3050',
 
-  success: '#7ed957',      
-  warning: '#f5a623',      
-  error: '#e74c3c',        
-  inactive: '#4a3a8a',    
+  card: '#0f1f35',
+  cardBorder: '#1a3050',
 };
