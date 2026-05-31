@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     marginBottom: 8,
+    borderRadius: 25,
   },
   appSub: {
     color: colors.textSecondary,

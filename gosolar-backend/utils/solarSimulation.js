@@ -145,17 +145,35 @@ const simulateMeasurement = (date, system, weatherData = {}) => {
     };
 };
 
-const simulateFullDay = (date, system, weatherData= {}, intervalMinutes = 30) =>{
+const simulateFullDay = (date, system, weatherData= {}, intervalMinutes = 30, hourlyWeatherData = null) =>{
     const measurements = [];
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
 
-    const totalIntervals = (24 * 60)/intervalMinutes;
+    const now = new Date();
+    const endTime = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        now.getHours(),
+        now.getMinutes(),
+        0, 0
+    );
+
+    const totalMinutes = (endTime - startOfDay) / (1000 * 60);
+    const totalIntervals = Math.floor(totalMinutes/intervalMinutes);
+    
     for (let i = 0; i<totalIntervals; i++){
         const measurementTime = new Date(startOfDay);
         measurementTime.setMinutes(i * intervalMinutes);
 
-        const measurement = simulateMeasurement(measurementTime, system, weatherData);
+        let intervalWeather = weatherData;
+        if(hourlyWeatherData){
+            const hour = measurementTime.getHours();
+            intervalWeather = hourlyWeatherData[hour] || weatherData;
+        }
+
+        const measurement = simulateMeasurement(measurementTime, system, intervalWeather);
         measurements.push(measurement);
     }
 
