@@ -10,16 +10,16 @@ export const AuthProvider = ({children}) =>{
 
     useEffect(()=>{
         const loadSession = async ()=>{
-            try{
+            try {
                 const savedToken = await getToken();
                 const savedUser = await getUser();
-                if(savedToken && saveUser){
-                    setToken(saveToken);
-                    setUser(savedUser);
+                if (savedToken && savedUser) {
+                setToken(savedToken);
+                setUser(savedUser);
                 }
-            } catch(err){
+            } catch (err) {
                 console.error('Error loading session:', err);
-            } finally{
+            } finally {
                 setLoading(false);
             }
         };
@@ -33,7 +33,7 @@ export const AuthProvider = ({children}) =>{
         setUser(user);
     };
 
-    const logout = async ()=>{
+    const logout = async () => {
         await clearStorage();
         setToken(null);
         setUser(null);

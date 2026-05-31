@@ -5,6 +5,7 @@ const forecastModel = require('../models/forecastModel');
 const recommendationModel = require('../models/recommendationModel');
 const {calculateConstantConsumption} = require('./consumptionCalculator');
 const {simulateMeasurement} = require('./solarSimulation');
+const {generateSchedule} = require('./schedulingEngine');
 const OpenAi = require('openai');
 
 const client = new OpenAi({
@@ -24,6 +25,14 @@ const generateRecommendations = async (system, userId, force = false) =>{
     const currentPowerW = parseFloat(latestMeasurement.power_w) || 0;
     const constantConsumptionW = calculateConstantConsumption(constantAppliances, 1) * 1000;
     const surplusW = currentPowerW - constantConsumptionW;
+
+    const schedule = await generateSchedule(
+        system,
+        userId,
+        applianceModel,
+        measurementModel,
+        constantConsumptionW
+    );
 
     if(currentPowerW <= 0) return {error: 'System is not producing energy', recommendations: []}; 
     if(surplusW <= 500) return {error: 'Surplus too low', recommendations: []};
@@ -64,6 +73,10 @@ const generateRecommendations = async (system, userId, force = false) =>{
     ? forecasts.map(f => `- ${new Date(f.forecast_date).toLocaleDateString()}: ${f.predicted_production_kwh} kWh predicted, ${f.cloud_coverage}% cloud coverage, ${f.temperature_c}°C`).join('\n')
     : 'No forecast available';
 
+    const scheduleText = schedule.length > 0
+    ? schedule.map(s => `- ${s.appliance_power_w}W): optimal start ${s.optimal_start}-${s.optimal_end}, saves ${s.savings_lei} lei, ${s.surplus_coverage_percent}% covered by solar${s.fully_covered ? ' ✓' : ' (partial)'}`).join('\n')
+    : 'No optimal schedule calculated';
+
     const prompt = ` You are an energy management AI assistant for a solar photovoltaic system.
     Analyze the following data and generate actionable recommendations to optimize energy usage.
     SYSTEM DATA:
@@ -85,6 +98,10 @@ const generateRecommendations = async (system, userId, force = false) =>{
     ${shiftableLoadsText}
     7-DAY FORECAST:
     ${forecastText}
+    OPTIMAL SCHEDULE (calculated by scheduling algorithm):
+    ${scheduleText}
+    Note: Use these calculated optimal times in your recommendations.
+    Include specific start times in your messages.
 
     INSTRUCTIONS:
     1. Generate 2-4 specific, actionable recommendations

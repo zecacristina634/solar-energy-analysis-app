@@ -4,6 +4,7 @@ const measurementModel = require('../models/measurementModel');
 const generatePairingCode = require('../utils/generatePairingCode');
 const simulationJob = require('../utils/simulationJob');
 const {simulateFullDay} = require('../utils/solarSimulation');
+const forecastController = require('../controllers/forecastController')
 
 const createSystem = async (req, res, next) =>{
     try{
@@ -264,7 +265,7 @@ const stopSimulation = async (req, res, next) => {
             return res.status(400).json({message: 'System is not a simulated system'});
         }
 
-        simulationJob.startJob(system.id_system);
+        simulationJob.stopJob(system.id_system);
 
         const updatedSystem = await systemModel.updateStatus(req.params.id, 'inactive');
 
@@ -296,7 +297,20 @@ const runSimulation = async (req, res, next) =>{
         const weatherData = req.body.weatherData || {};
 
         const today = new Date();
-        const fullDayMeasurements = simulateFullDay(today, system, weatherData);
+
+        const openMeteoData = await forecastController.fetchOpenMeteo(
+            system.latitude || 44.43,
+            system.longitude || 26.10
+        );
+        const hourlyWeatherData = forecastController.getTodayHourlyWeather(openMeteoData);
+
+        const fullDayMeasurements = simulateFullDay(
+            today,
+            system,
+            weatherData,
+            30,
+            hourlyWeatherData
+        );
 
         for(const measurement of fullDayMeasurements){
             await measurementModel.addMeasurement(system.id_system, measurement);

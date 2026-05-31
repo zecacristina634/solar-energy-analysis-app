@@ -1,6 +1,8 @@
 const express = require('express');
 const dotenv =require('dotenv');
 
+const cors = require('cors');
+
 dotenv.config();
 
 const authRoutes = require('./routes/authRoutes');
@@ -15,6 +17,12 @@ const reportRoutes = require('./routes/reportRoutes');
 const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
+
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));

@@ -3,7 +3,7 @@ const systemModel = require('../models/systemModel');
 const forecastModel = require('../models/forecastModel');
 const {simulateFullDay} = require('../utils/solarSimulation');
 
-const fetchOpenModel = async(latitude, longitude) =>{
+const fetchOpenMeteo = async(latitude, longitude) =>{
     const url = `https://api.open-meteo.com/v1/forecast`;
 
     const response = await axios.get(url, {
@@ -15,6 +15,11 @@ const fetchOpenModel = async(latitude, longitude) =>{
                 'temperature_2m_min',
                 'cloudcover_mean',
                 'shortwave_radiation_sum'
+            ].join(','),
+            hourly: [
+                'temperature_2m',
+                'cloudcover',
+                'shortwave_radiation'
             ].join(','),
             timezone: 'Europe/Bucharest',
             forecast_days: 7
@@ -34,7 +39,7 @@ const fetchForecast = async (req, res, next) =>{
         const latitude = system.latitude || 44.43;
         const longitude = system.longitude || 26.10;
 
-        const weatherData = await fetchOpenModel(latitude, longitude);
+        const weatherData = await fetchOpenMeteo(latitude, longitude);
         const daily = weatherData.daily;
 
         const savedForecast = [];
@@ -76,6 +81,30 @@ const fetchForecast = async (req, res, next) =>{
     } catch(err){
         next(err);
     }
+};
+
+const getTodayHourlyWeather = (weatherData) =>{
+    const hourly = weatherData.hourly;
+    if(!hourly)
+        return null;
+
+    const hourlyByHour = {};
+
+    for (let i =0; i<hourly.time.length;i++){
+        const time = new Date(hourly.time[i]);
+        const today = new Date();
+
+        if( time.getDate()=== today.getDate() && time.getMonth()===today.getMonth()){
+            const hour = time.getHours();
+            hourlyByHour[hour] = {
+                temperature_c: hourly.temperature_2m[i],
+                cloud_coverage: hourly.cloudcover[i],
+                solar_irradiance: hourly.shortwave_radiation[i]
+            };
+        }
+    }
+
+    return hourlyByHour;
 };
 
 const getWeeklyForecast = async (req, res, next) =>{
@@ -129,7 +158,9 @@ const deletePastForecasts = async (req, res, next)=>{
 
 module.exports = {
     fetchForecast,
+    getTodayHourlyWeather,
     getWeeklyForecast,
     getForecastByDate,
-    deletePastForecasts
+    deletePastForecasts,
+    fetchOpenMeteo
 };
