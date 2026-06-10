@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../store/authStore';
 import { colors } from '../constants/colors';
+import { ThemeProvider } from '../store/themeStore';
 
 function NavigationGuard() {
   const { token, loading } = useAuth();
@@ -38,7 +39,9 @@ function NavigationGuard() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <NavigationGuard />
+      <ThemeProvider>
+        <NavigationGuard />
+      </ThemeProvider>
     </AuthProvider>
   );
 }
