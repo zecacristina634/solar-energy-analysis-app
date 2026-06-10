@@ -7,15 +7,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Line, Rect, Polygon, Text as SvgText, Animate } from 'react-native-svg';
 import { Zap, Wifi, Play, Square, RefreshCw } from 'lucide-react-native';
 import { useAuth } from '../../store/authStore';
-import { colors } from '../../constants/colors';
+import { useTheme } from '../../store/themeStore';
 import { getSystems, getDashboardData, pairSystem, startSimulation, runSimulation, stopSimulation } from '../../services/systemService';
 import { getConstantAppliances } from '../../services/applianceService';
 import PairingModal from '../../components/PairingModal';
+import SolarHouse3D from '../../components/SolarHouse3D';
 
 const TARIF_LEI = 0.80;
 
 export default function Dashboard() {
   const {user} = useAuth();
+  const {colors, isDark} = useTheme();
+  const styles = makeStyles(colors);
 
   const [system, setSystem] = useState(null);
   const [dashboard, setDashboard] = useState(null);
@@ -181,49 +184,10 @@ export default function Dashboard() {
             }
           </TouchableOpacity>
         </View>
-
-        {/* Energy Flow */}
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>ENERGY FLOW</Text>
-          <Svg width="100%" height={90} viewBox="0 0 300 90">
-            {/* Panou solar */}
-            <Rect x="4" y="18" width="40" height="26" fill="#0a1628" stroke="#7ed957" strokeWidth="1.5" rx="3"/>
-            <Line x1="16" y1="18" x2="16" y2="44" stroke="#7ed957" strokeWidth="0.8" opacity="0.5"/>
-            <Line x1="28" y1="18" x2="28" y2="44" stroke="#7ed957" strokeWidth="0.8" opacity="0.5"/>
-            <Line x1="4" y1="31" x2="44" y2="31" stroke="#7ed957" strokeWidth="0.8" opacity="0.5"/>
-            <Circle cx="24" cy="9" r="7" fill="#7ed957" opacity="0.9"/>
-            <SvgText x="24" y="58" textAnchor="middle" fill="#7ed957" fontSize="9">{Math.round(currentPowerW)}W</SvgText>
-
-            {/* Flow panou -> invertor */}
-            <Line x1="44" y1="31" x2="96" y2="31" stroke="#7ed957" strokeWidth="2" strokeDasharray="6 4"/>
-
-            {/* Invertor */}
-            <Rect x="96" y="22" width="30" height="18" fill="#0a1628" stroke="#1a3050" strokeWidth="1" rx="2"/>
-            <SvgText x="111" y="33" textAnchor="middle" fill="#6b8ab0" fontSize="8">INV</SvgText>
-            <SvgText x="111" y="58" textAnchor="middle" fill="#6b8ab0" fontSize="9">Invertor</SvgText>
-
-            {/* Flow invertor -> casa */}
-            <Line x1="126" y1="31" x2="178" y2="31" stroke="#7ed957" strokeWidth="2" strokeDasharray="6 4"/>
-
-            {/* Casa */}
-            <Polygon points="178,22 200,31 222,22" fill="#0a1628" stroke="#1a3050" strokeWidth="1.5"/>
-            <Rect x="180" y="31" width="40" height="16" fill="#0f1f35" stroke="#1a3050" strokeWidth="1"/>
-            <Rect x="185" y="35" width="8" height="12" fill="#0a1628" stroke="#1a3050" strokeWidth="0.5"/>
-            <Rect x="199" y="35" width="8" height="10" fill="#050d1a" stroke="#1a3050" strokeWidth="0.5"/>
-            <Rect x="183" y="24" width="7" height="4" fill="#0f1f35" stroke="#7ed957" strokeWidth="0.8"/>
-            <Rect x="193" y="24" width="7" height="4" fill="#0f1f35" stroke="#7ed957" strokeWidth="0.8"/>
-            <SvgText x="200" y="58" textAnchor="middle" fill="#6b8ab0" fontSize="9">{Math.round(constantConsumptionW)}W</SvgText>
-
-            {/* Flow casa -> retea */}
-            <Line x1="222" y1="31" x2="268" y2="31" stroke={toGridW > 0 ? "#7ed957" : "#e74c3c"} strokeWidth="2" strokeDasharray="6 4" opacity="0.7"/>
-
-            {/* Retea */}
-            <Circle cx="280" cy="31" r="12" fill="#0a1628" stroke={toGridW > 0 ? "#7ed957" : "#1a3050"} strokeWidth="1.5"/>
-            <SvgText x="280" y="35" textAnchor="middle" fill={toGridW > 0 ? "#7ed957" : "#6b8ab0"} fontSize="9">⚡</SvgText>
-            <SvgText x="280" y="58" textAnchor="middle" fill={toGridW > 0 ? "#7ed957" : "#e74c3c"} fontSize="9">
-              {toGridW > 0 ? `+${Math.round(toGridW)}W` : `-${Math.round(fromGridW)}W`}
-            </SvgText>
-          </Svg>
+        
+        {/* Casa 3D */}
+        <View style={{marginBottom: 10, width: '100%'}}>
+          <SolarHouse3D key={isDark? 'dark': 'light'} isDark={isDark}/>
         </View>
 
         {/* Arc progres */}
@@ -289,7 +253,7 @@ export default function Dashboard() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.primaryDark,

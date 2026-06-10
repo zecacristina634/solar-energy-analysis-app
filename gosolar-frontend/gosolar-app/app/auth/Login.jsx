@@ -7,11 +7,14 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../store/authStore';
 import {login, register} from '../../services/authService';
-import { colors } from '../../constants/colors';
+import { useTheme } from '../../store/themeStore';
 
 export default function Login() {
     const router = useRouter();
     const {login: loginStore} = useAuth();
+
+    const {colors} = useTheme();
+    const styles = makeStyles(colors);
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -114,7 +117,7 @@ export default function Login() {
     );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) =>StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.primaryDark,
