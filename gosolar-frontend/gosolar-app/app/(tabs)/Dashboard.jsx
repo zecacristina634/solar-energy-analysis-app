@@ -133,8 +133,7 @@ export default function Dashboard() {
   const peakW = parseFloat(system?.peak_power_kwp || 5) * 1000;
   const arcPercent = Math.min(1, currentPowerW / peakW);
 
-  const arcRadius = 55;
-  const arcCircumference = Math.PI * arcRadius;
+  const arcCircumference = Math.PI * 80;
   const arcFill = arcPercent * arcCircumference;
 
   const getLastUpdatedText = ()=>{
@@ -200,14 +199,14 @@ export default function Dashboard() {
               stroke="#7ed957"
               strokeWidth="12"
               strokeLinecap="round"
-              strokeDasharray={`${arcFill * 2.51} 251`}
+              strokeDasharray={`${arcFill} ${arcCircumference}`}
             />
             
             <View style={styles.arcTextOverlay}>
               <Text style={styles.arcValue}>{Math.round(currentPowerW)}</Text>
               <Text style={styles.arcUnit}>W current</Text>
             </View>
-            <SvgText x="13" y="130" textAnchor="start" fill="#6b8ab0" fontSize="9">0W</SvgText>
+            <SvgText x="13" y="130" textAnchor="start" fill="#6b8ab0" fontSize="9">0kW</SvgText>
             <SvgText x="173" y="130" textAnchor="start" fill="#6b8ab0" fontSize="9">{peakW/1000}kW</SvgText>
           </Svg>
         </View>

@@ -71,7 +71,7 @@ const addConstant = async (userId, data)=> {
         custom_usage_time_minutes,
         custom_nominal_power_w
     } = data;
-
+    
     const result = await pool.query(
         `INSERT INTO user_constant_appliances 
         (id_user, id_catalog_appliance, custom_name, quantity, custom_estimated_consumption_kwh,
@@ -87,6 +87,7 @@ const addConstant = async (userId, data)=> {
             custom_usage_time_minutes || null, 
             custom_nominal_power_w || null
         ]
+        
     );
     return result.rows[0];
 };

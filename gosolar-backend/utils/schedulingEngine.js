@@ -5,7 +5,7 @@ const getHourlyProduction = async (systemId, measurementModel) =>{
     const startOfDay = new Date(today.setHours(0,0,0,0)).toISOString();
     const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
 
-    const measurements = await measurementModel.getHistoryByPerior(
+    const measurements = await measurementModel.getHistoryByPeriod(
         systemId,
         startOfDay,
         endOfDay
@@ -64,7 +64,7 @@ const findOptimalStartTime = (appliance, hourlySurplus, prefferedStart, preffere
         let minSurplusInWindow = Infinity;
         let totalSurplusInWindow = 0;
 
-        for (let d =0; d<= durationHours; d++){
+        for (let d =0; d< durationHours; d++){
             const hourSurplus = hourlySurplus[h+d] || 0;
             minSurplusInWindow = Math.min(minSurplusInWindow, hourSurplus);
             totalSurplusInWindow += hourSurplus;
@@ -128,8 +128,8 @@ const generateSchedule = async (system, userId, applianceModel, measurementModel
             const result = findOptimalStartTime(
                 appliance,
                 hourlySurplus,
-                appliance.preffered_start_time,
-                appliance.preffered_end_time
+                appliance.preferred_start_time,
+                appliance.preferred_end_time
             );
 
             if(result){

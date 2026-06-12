@@ -114,6 +114,16 @@ const deleteOld = async (userId) =>{
     return result.rowCount;
 };
 
+const deleteById = async (id, userId) => {
+    const result = await pool.query(
+        `DELETE FROM recommendations
+        WHERE id_recommendation = $1 AND id_user = $2
+        RETURNING id_recommendation`,
+        [id, userId]
+    );
+    return result.rows[0];
+};
+
 module.exports ={
     create,
     getByUser,
@@ -122,5 +132,6 @@ module.exports ={
     getByUserAndType,
     markAsRead,
     markAllAsRead,
-    deleteOld
+    deleteOld,
+    deleteById
 };

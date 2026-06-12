@@ -35,7 +35,7 @@ const generateRecommendations = async (system, userId, force = false) =>{
     );
 
     if(currentPowerW <= 0) return {error: 'System is not producing energy', recommendations: []}; 
-    if(surplusW <= 500) return {error: 'Surplus too low', recommendations: []};
+    if(surplusW <= 0) return {error: 'No energy surplus available', recommendations: []};
 
     const currentHour = new Date().getHours();
     if(currentHour < 7 || currentHour >=20) return {error: 'Outside active hours', recommendations: []};
@@ -50,7 +50,6 @@ const generateRecommendations = async (system, userId, force = false) =>{
     }
 
     if(shiftableLoads.length === 0) return {error: 'No shiftable loads configured', recommendations: []};
-    if(forecasts.length === 0) return {error: 'No forecast data available', recommendations: []};
     
     const estimatedMeasurement = simulateMeasurement(new Date(), system, {
         temperature_c: parseFloat(latestMeasurement.temperature_c)||20,
@@ -74,7 +73,7 @@ const generateRecommendations = async (system, userId, force = false) =>{
     : 'No forecast available';
 
     const scheduleText = schedule.length > 0
-    ? schedule.map(s => `- ${s.appliance_power_w}W): optimal start ${s.optimal_start}-${s.optimal_end}, saves ${s.savings_lei} lei, ${s.surplus_coverage_percent}% covered by solar${s.fully_covered ? ' ✓' : ' (partial)'}`).join('\n')
+    ? schedule.map(s => `- ${s.appliance_name} (${s.appliance_power_w}W): optimal start ${s.optimal_start}-${s.optimal_end}, saves ${s.savings_lei} lei, ${s.surplus_coverage_percent}% covered by solar${s.fully_covered ? ' ✓' : ' (partial)'}`).join('\n')
     : 'No optimal schedule calculated';
 
     const prompt = ` You are an energy management AI assistant for a solar photovoltaic system.
@@ -104,7 +103,7 @@ const generateRecommendations = async (system, userId, force = false) =>{
     Include specific start times in your messages.
 
     INSTRUCTIONS:
-    1. Generate 2-4 specific, actionable recommendations
+    1. Generate 1-3 specific, actionable recommendations — only the most relevant ones, do NOT pad to reach a higher count
     2. Consider current surplus, shiftable loads priorities and forecast data
     3. If performance low, include a system check recommendation
     4. Return ONLY a valid JSON object with this exact structure, no markdown, no extra text:
