@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LogOut, Sun, Moon } from 'lucide-react-native';
 import { useAuth } from '../../store/authStore';
 import { useTheme } from '../../store/themeStore';
+import AppHeader from '../../components/AppHeader';
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -11,9 +12,7 @@ export default function Profile() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
-      </View>
+      <AppHeader title="Profile" />
 
       <View style={styles.content}>
         <Text style={styles.name}>{user?.name}</Text>
@@ -44,18 +43,6 @@ const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.primaryDark,
-  },
-  header: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-  },
-  headerTitle: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: '500',
   },
   content: {
     padding: 24,

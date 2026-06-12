@@ -13,6 +13,7 @@ import {
   markAsRead, markAllAsRead, deleteRecommendation
 } from '../../services/recommendationService';
 import { getSystems } from '../../services/systemService';
+import AppHeader from '../../components/AppHeader';
 
 const TYPE_CONFIG = {
   shift_load:      { label: 'Shift Load',      color: '#7ed957', bgLight: '#d4edda', textLight: '#155724' },
@@ -150,12 +151,14 @@ export default function Recommendations() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Recommendations</Text>
-        <TouchableOpacity onPress={handleMarkAllAsRead}>
-          <Text style={styles.markAllText}>Mark all read</Text>
-        </TouchableOpacity>
-      </View>
+      <AppHeader
+        title="Recommendations"
+        right={
+          <TouchableOpacity onPress={handleMarkAllAsRead}>
+            <Text style={styles.markAllText}>Mark all read</Text>
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         style={styles.scroll}
@@ -311,17 +314,6 @@ const makeStyles = (colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.primaryDark },
   center: { flex: 1, backgroundColor: colors.primaryDark, justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: colors.accent, fontSize: 16 },
-  header: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-  },
-  headerTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '500' },
   markAllText: { color: colors.textSecondary, fontSize: 13 },
   scroll: { flex: 1, padding: 12 },
   buttonsRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },

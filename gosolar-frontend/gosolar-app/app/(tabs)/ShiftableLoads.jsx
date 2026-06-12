@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, ChevronDown, ChevronUp, Trash2, Edit, X, Check } from 'lucide-react-native';
 import { useTheme } from '../../store/themeStore';
+import AppHeader from '../../components/AppHeader';
 import {
   getConstantAppliances, addConstantAppliance, updateConstantAppliance, deleteConstantAppliance,
   getShiftableLoads, addShiftableLoad, updateShiftableLoad, deleteShiftableLoad,
@@ -227,9 +228,7 @@ export default function ShiftableLoads() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Loads</Text>
-      </View>
+      <AppHeader title="Loads" />
 
       <View style={styles.tabRow}>
         <TouchableOpacity
@@ -685,11 +684,6 @@ const makeStyles = (colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.primaryDark },
   center: { flex: 1, backgroundColor: colors.primaryDark, justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: colors.accent, fontSize: 16 },
-  header: {
-    backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: colors.borderLight,
-  },
-  headerTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '500' },
   tabRow: {
     flexDirection: 'row', backgroundColor: colors.primary,
     paddingHorizontal: 12, paddingBottom: 10, gap: 8,
