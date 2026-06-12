@@ -116,8 +116,20 @@ const markAllAsRead = async (req, res, next) =>{
 const deleteOldRecommendations = async (req, res, next) =>{
     try{
         const count = await recommendationModel.deleteOld(req.user.id_user);
-        res.status(200).json({message: `${count} old recommendations deleted`});      
+        res.status(200).json({message: `${count} old recommendations deleted`});
     } catch(err){
+        next(err);
+    }
+};
+
+const deleteRecommendation = async (req, res, next) => {
+    try {
+        const deleted = await recommendationModel.deleteById(req.params.id, req.user.id_user);
+        if (!deleted) {
+            return res.status(404).json({ message: 'Recommendation not found' });
+        }
+        res.status(200).json({ message: 'Recommendation deleted successfully' });
+    } catch (err) {
         next(err);
     }
 };
@@ -170,6 +182,7 @@ module.exports ={
     markAsRead,
     markAllAsRead,
     deleteOldRecommendations,
+    deleteRecommendation,
     startAutoRecommendations,
     stopAutoRecommendations
 };

@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const applianceController = require('../controllers/applianceController');
 const authMiddleware = require('../middleware/authMiddleware');
-const { route } = require('./systemRoutes');
 
 router.get('/catalog/categories', applianceController.getCategories);
 router.get('/catalog', applianceController.getCatalog);

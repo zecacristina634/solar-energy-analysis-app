@@ -1,6 +1,7 @@
 const systemModel = require('../models/systemModel');
 const pairingModel = require('../models/pairingModel');
 const measurementModel = require('../models/measurementModel');
+const forecastModel = require('../models/forecastModel');
 const generatePairingCode = require('../utils/generatePairingCode');
 const simulationJob = require('../utils/simulationJob');
 const {simulateFullDay} = require('../utils/solarSimulation');
@@ -317,6 +318,29 @@ const runSimulation = async (req, res, next) =>{
         }
 
         console.log(`[SIMULATION] Populated ${fullDayMeasurements.length} measurements for system ${system.id_system}`);
+
+        try {
+            const daily = openMeteoData.daily;
+            for (let i = 0; i < daily.time.length; i++) {
+                const avgTemp = (daily.temperature_2m_max[i] + daily.temperature_2m_min[i]) / 2;
+                const dayMeasurements = simulateFullDay(new Date(daily.time[i]), system, {
+                    temperature_c: avgTemp,
+                    cloud_coverage: daily.cloudcover_mean[i]
+                });
+                const predictedKwh = dayMeasurements.reduce((sum, m) =>
+                    sum + (parseFloat(m.power_w) || 0) * 0.5 / 1000, 0);
+                await forecastModel.upsert(system.id_system, {
+                    forecast_date: daily.time[i],
+                    temperature_c: avgTemp,
+                    solar_irradiance: daily.shortwave_radiation_sum[i],
+                    cloud_coverage: daily.cloudcover_mean[i],
+                    predicted_production_kwh: parseFloat(predictedKwh.toFixed(4))
+                });
+            }
+            console.log(`[SIMULATION] Saved forecasts for system ${system.id_system}`);
+        } catch (forecastErr) {
+            console.warn('[SIMULATION] Could not save forecasts:', forecastErr.message);
+        }
 
         simulationJob.startJob(system, weatherData);
 

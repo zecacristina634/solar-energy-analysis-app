@@ -9,6 +9,7 @@ router.get('/system/:systemId', authMiddleware, recommendationController.getReco
 router.post('/generate/:systemId', authMiddleware, recommendationController.generateRecommendations);
 router.patch('/read-all', authMiddleware, recommendationController.markAllAsRead);
 router.delete('/old', authMiddleware, recommendationController.deleteOldRecommendations);
+router.delete('/:id', authMiddleware, recommendationController.deleteRecommendation);
 router.post('/auto/start/:systemId', authMiddleware, recommendationController.startAutoRecommendations);
 router.post('/auto/stop/:systemId', authMiddleware, recommendationController.stopAutoRecommendations);
 router.get('/', authMiddleware, recommendationController.getRecommendations);

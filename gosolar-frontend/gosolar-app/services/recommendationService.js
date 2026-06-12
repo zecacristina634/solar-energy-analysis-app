@@ -44,3 +44,8 @@ export const deleteOldRecommendations = async () =>{
     const response = await api.delete(`/recommendations/old`);
     return response.data;
 };
+
+export const deleteRecommendation = async (id) => {
+    const response = await api.delete(`/recommendations/${id}`);
+    return response.data;
+};

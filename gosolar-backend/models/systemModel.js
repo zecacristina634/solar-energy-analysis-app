@@ -133,9 +133,16 @@ const getDashboardData = async (id) =>{
             em.current_a AS current_current_a,
             em.temperature_c AS current_temperature_c,
             
-            COALESCE(daily.produced_kwh, 0) AS produced_today_kwh,
-            COALESCE(daily.consumed_kwh, 0) AS consumed_today_kwh
-            
+            COALESCE((
+                SELECT AVG(power_w) *
+                    EXTRACT(EPOCH FROM (NOW() - DATE_TRUNC('day', NOW()))) / 3600.0 / 1000.0
+                FROM energy_measurements
+                WHERE id_system = ps.id_system
+                AND recorded_at >= DATE_TRUNC('day', NOW())
+                AND power_w IS NOT NULL
+            ), 0) AS produced_today_kwh,
+            0 AS consumed_today_kwh
+
         FROM photovoltaic_system ps
         LEFT JOIN LATERAL(
             SELECT * FROM energy_measurements
@@ -143,12 +150,7 @@ const getDashboardData = async (id) =>{
             ORDER BY recorded_at DESC
             LIMIT 1
         ) em ON true
-         
-        LEFT JOIN energy_measurements_summary daily
-        ON daily.id_system = ps.id_system
-        AND daily.summary_type = 'daily' 
-        AND DATE(daily.time_start) = CURRENT_DATE
-        
+
         WHERE ps.id_system = $1`,
         [id]
     );

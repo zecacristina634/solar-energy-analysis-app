@@ -56,7 +56,7 @@ const addConstantAppliance = async (req, res, next) =>{
         } = req.body;
 
         if(!id_catalog_appliance && !custom_name){
-            return res.status(400).json({message: 'Either catalog applinace or custom name is required'});
+            return res.status(400).json({message: 'Either catalog appliance or custom name is required'});
         }
 
         if(id_catalog_appliance && custom_name){
@@ -152,7 +152,7 @@ const addShiftableLoad = async (req, res, next) =>{
         } = req.body;
 
         if(!id_catalog_appliance && !custom_name){
-            return res.status(400).json({message: 'Either catalog applinace or custom name is required'});
+            return res.status(400).json({message: 'Either catalog appliance or custom name is required'});
         }
 
         if(id_catalog_appliance && custom_name){
