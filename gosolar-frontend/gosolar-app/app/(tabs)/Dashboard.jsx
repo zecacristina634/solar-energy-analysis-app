@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, RefreshControl, Alert
@@ -12,6 +13,7 @@ import { getSystems, getDashboardData, pairSystem, startSimulation, runSimulatio
 import { getConstantAppliances } from '../../services/applianceService';
 import PairingModal from '../../components/PairingModal';
 import SolarHouse3D from '../../components/SolarHouse3D';
+import AppHeader from '../../components/AppHeader';
 
 const TARIF_LEI = 0.80;
 
@@ -28,6 +30,11 @@ export default function Dashboard() {
   const [simRunning, setSimRunning] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [pairingModalVisible, setPairingModalVisible] = useState(false);
+  const [houseKey, setHouseKey] = useState(0);
+
+  useFocusEffect(useCallback(() => {
+    setHouseKey(k => k + 1);
+  }, []));
 
   const loadData = useCallback(async ()=>{
     try{
@@ -154,13 +161,15 @@ export default function Dashboard() {
 
   return(
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Dashboard</Text>
-        <View style={styles.statusBadge}>
-          <View style={[styles.statusDot, { backgroundColor: system?.system_status === 'active' ? colors.accent : colors.error }]} />
-          <Text style={styles.statusText}>{system?.system_status || 'No system'}</Text>
-        </View>
-      </View>
+      <AppHeader
+        title="Dashboard"
+        right={
+          <View style={styles.statusBadge}>
+            <View style={[styles.statusDot, { backgroundColor: system?.system_status === 'active' ? colors.accent : colors.error }]} />
+            <Text style={styles.statusText}>{system?.system_status || 'No system'}</Text>
+          </View>
+        }
+      />
 
       <ScrollView
         style={styles.scroll}
@@ -186,7 +195,7 @@ export default function Dashboard() {
         
         {/* Casa 3D */}
         <View style={{marginBottom: 10, width: '100%'}}>
-          <SolarHouse3D key={isDark? 'dark': 'light'} isDark={isDark}/>
+          <SolarHouse3D key={`${isDark}-${houseKey}`} isDark={isDark}/>
         </View>
 
         {/* Arc progres */}
@@ -266,21 +275,6 @@ const makeStyles = (colors) => StyleSheet.create({
   loadingText: {
     color: colors.accent,
     fontSize: 16,
-  },
-  header: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-  },
-  headerTitle: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: '500',
   },
   statusBadge: {
     flexDirection: 'row',
