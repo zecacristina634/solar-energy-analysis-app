@@ -1,4 +1,4 @@
-import { use, useState } from 'react';
+import { useState } from 'react';
 import {
     View, Text, TouchableOpacity, StyleSheet,
     ActivityIndicator, KeyboardAvoidingView, Platform,
@@ -6,12 +6,14 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../store/authStore';
+import { useTheme } from '../../store/themeStore';
 import { register} from '../../services/authService';
-import { colors } from '../../constants/colors';
 
 export default function Register() {
     const router = useRouter();
     const {login: loginStore} = useAuth();
+    const { colors } = useTheme();
+    const styles = makeStyles(colors);
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -163,7 +165,7 @@ export default function Register() {
     );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.primaryDark,

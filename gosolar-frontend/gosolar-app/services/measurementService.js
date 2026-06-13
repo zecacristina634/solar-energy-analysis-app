@@ -41,7 +41,7 @@ export const getMonthlyProduction = async (systemId, year) =>{
 };
 
 export const getEnergyVsConsumption = async (systemId, startDate, endDate) =>{
-    const response = await api.get(`/measurements/${systemId}/energy-vs-consumtion`,{
+    const response = await api.get(`/measurements/${systemId}/energy-vs-consumption`,{
         params: {startDate, endDate}
     });
     return response.data;
