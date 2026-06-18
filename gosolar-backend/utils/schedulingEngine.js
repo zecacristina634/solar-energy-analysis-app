@@ -45,7 +45,7 @@ const getHourlySurplus = (hourlyProduction,  constantConsumptionW) =>{
     return hourlySurplus;
 };
 
-const findOptimalStartTime = (appliance, hourlySurplus, prefferedStart, prefferedEnd) =>{
+const findOptimalStartTime = (appliance, hourlySurplus, preferredStart, preferredEnd) =>{
     const appliancePowerW = parseFloat(
         appliance.custom_nominal_power_w || appliance.catalog_power_w || 0
     );
@@ -53,8 +53,8 @@ const findOptimalStartTime = (appliance, hourlySurplus, prefferedStart, preffere
         (appliance.custom_usage_time_minutes || appliance.catalog_usage_time || 60)/60
     );
 
-    const startHour = prefferedStart ? parseInt(prefferedStart.split(':')[0]) : 7;
-    const endHour = prefferedEnd ? parseInt(prefferedEnd.split(':')[0]) : 20;
+    const startHour = preferredStart ? parseInt(preferredStart.split(':')[0]) : 7;
+    const endHour = preferredEnd ? parseInt(preferredEnd.split(':')[0]) : 20;
 
 
     let bestStartHour = null;

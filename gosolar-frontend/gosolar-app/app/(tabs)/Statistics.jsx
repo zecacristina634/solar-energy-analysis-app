@@ -180,12 +180,14 @@ export default function Statistics() {
   };
 
   // Date grafic prod vs consum
+  const TARGET_HOURS = [6, 8, 10, 12, 14, 16, 18];
   const hourlyLabels = ['6h', '8h', '10h', '12h', '14h', '16h', '18h'];
-  const productionLine = hourlyData.length > 0
-    ? hourlyData.map(h => parseFloat(parseFloat(h.produced_kwh || 0).toFixed(2)))
-    : [0, 0, 0, 0, 0, 0, 0];
+  const productionLine = TARGET_HOURS.map(h => {
+    const match = hourlyData.find(d => new Date(d.hour).getHours() === h);
+    return parseFloat(parseFloat(match?.produced_kwh || 0).toFixed(2));
+  });
   const consumptionLine = hourlyLabels.map(() =>
-    parseFloat((constantConsumptionW / 1000 * 1).toFixed(2))
+    parseFloat((constantConsumptionW / 1000).toFixed(2))
   );
 
   const chartConfig = {

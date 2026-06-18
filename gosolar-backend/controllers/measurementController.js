@@ -222,7 +222,7 @@ const getDailyProduction = async (req, res, next) =>{
             endDate
         );
 
-        res.status(200).json({production});
+        res.status(200).json({data: production});
     } catch(err){
         next(err)
     }
@@ -242,7 +242,7 @@ const getMonthlyProduction = async (req, res, next) =>{
             year
         );
 
-        res.status(200).json({production, year});
+        res.status(200).json({data: production, year});
     } catch(err){
         next(err)
     }

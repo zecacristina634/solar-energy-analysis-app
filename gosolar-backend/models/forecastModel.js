@@ -58,7 +58,7 @@ const getWeeklyForecast = async (systemId) =>{
         `SELECT * FROM forecast
         WHERE id_system = $1
         AND forecast_date >= CURRENT_DATE
-        AND forecast_date < CURRENT_DATE + INTERVAL '7 days'
+        AND forecast_date < CURRENT_DATE + INTERVAL '9 days'
         ORDER BY forecast_date ASC`,
         [systemId]
     );
