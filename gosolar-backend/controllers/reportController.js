@@ -6,7 +6,7 @@ const generateReport = async (req, res, next) =>{
     try{
         const {systemId, startDate, endDate, indicators} = req.body;
         if(!systemId || !startDate || !endDate){
-            return resizeBy.status(400).json({message: 'System ID, start date and end date are required'});
+            return res.status(400).json({message: 'System ID, start date and end date are required'});
         }
 
         const system = await systemModel.getById(systemId, req.user.id_user);
@@ -41,7 +41,7 @@ const generateReport = async (req, res, next) =>{
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader(
             'Content-Disposition',
-            `attachement; filename=gosolar_report_${systemId}_${startDate.split('T')[0]}_${endDate.split('T')[0]}.pdf`
+            `attachment; filename=gosolar_report_${systemId}_${startDate.split('T')[0]}_${endDate.split('T')[0]}.pdf`
         );
 
         doc.pipe(res);
@@ -67,39 +67,29 @@ const generateReport = async (req, res, next) =>{
             .text(`Status: ${system.system_status}`);
         doc.moveDown(1);
 
-        if(dailyProduction.length >0 ){
+        if(dailyProduction.length > 0){
             doc.fontSize(14).font('Helvetica-Bold').text('Daily Production');
             doc.moveDown(0.5);
             doc.fontSize(10).font('Helvetica-Bold')
-                .text('Date', 50, doc.y, { width: 150 })
-                .text('Produced (kWh)', 200, doc.y - 12, { width: 150 })
-                .text('Consumed (kWh)', 350, doc.y - 12, { width: 150 })
-                .text('Surplus (kWh)', 450, doc.y - 12, { width: 100 });
+                .text('Date', 50, doc.y, { width: 200 })
+                .text('Produced (kWh)', 250, doc.y - 12, { width: 200 });
 
             doc.moveDown(0.3);
-
             doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
             doc.moveDown(0.3);
 
             doc.font('Helvetica').fontSize(10);
 
             let totalProduced = 0;
-            let totalConsumed = 0;
 
             for (const row of dailyProduction) {
-                const date = new Date(row.day).toLocaleDateString();
-                const produced = parseFloat(row.total_produced_kwh || 0).toFixed(3);
-                const consumed = parseFloat(row.total_consumed_kwh || 0).toFixed(3);
-                const surplus = (parseFloat(produced) - parseFloat(consumed)).toFixed(3);
-
+                const date = new Date(row.date).toLocaleDateString();
+                const produced = parseFloat(row.produced_kwh || 0).toFixed(3);
                 totalProduced += parseFloat(produced);
-                totalConsumed += parseFloat(consumed);
 
                 doc
-                .text(date, 50, doc.y, { width: 150 })
-                .text(produced, 200, doc.y - 12, { width: 150 })
-                .text(consumed, 350, doc.y - 12, { width: 150 })
-                .text(surplus, 450, doc.y - 12, { width: 100 });
+                    .text(date, 50, doc.y, { width: 200 })
+                    .text(produced, 250, doc.y - 12, { width: 200 });
 
                 doc.moveDown(0.3);
             }
@@ -108,10 +98,9 @@ const generateReport = async (req, res, next) =>{
             doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
             doc.moveDown(0.3);
 
-            doc.font('Helvetica-Bold').text('Total', 50, doc.y, { width: 150 })
-                .text(totalProduced.toFixed(3), 200, doc.y - 12, { width: 150 })
-                .text(totalConsumed.toFixed(3), 350, doc.y - 12, { width: 150 })
-                .text((totalProduced - totalConsumed).toFixed(3), 450, doc.y - 12, { width: 100 });
+            doc.font('Helvetica-Bold')
+                .text('Total', 50, doc.y, { width: 200 })
+                .text(totalProduced.toFixed(3), 250, doc.y - 12, { width: 200 });
 
             doc.moveDown(1.5);
         }
@@ -126,9 +115,8 @@ const generateReport = async (req, res, next) =>{
             ];
 
             doc.fontSize(10).font('Helvetica-Bold')
-                .text('Month', 50, doc.y, { width: 150 })
-                .text('Produced (kWh)', 200, doc.y - 12, { width: 150 })
-                .text('Consumed (kWh)', 350, doc.y - 12, { width: 150 });
+                .text('Month', 50, doc.y, { width: 200 })
+                .text('Produced (kWh)', 250, doc.y - 12, { width: 200 });
 
             doc.moveDown(0.3);
             doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
@@ -137,14 +125,12 @@ const generateReport = async (req, res, next) =>{
             doc.font('Helvetica').fontSize(10);
 
             for (const row of monthlyProduction) {
-                const monthName = monthNames[parseInt(row.month) - 1];
-                const produced = parseFloat(row.total_produced_kwh || 0).toFixed(3);
-                const consumed = parseFloat(row.total_consumed_kwh || 0).toFixed(3);
+                const monthName = monthNames[new Date(row.month).getMonth()];
+                const produced = parseFloat(row.produced_kwh || 0).toFixed(3);
 
                 doc
-                .text(monthName, 50, doc.y, { width: 150 })
-                .text(produced, 200, doc.y - 12, { width: 150 })
-                .text(consumed, 350, doc.y - 12, { width: 150 });
+                    .text(monthName, 50, doc.y, { width: 200 })
+                    .text(produced, 250, doc.y - 12, { width: 200 });
 
                 doc.moveDown(0.3);
             }
@@ -153,13 +139,11 @@ const generateReport = async (req, res, next) =>{
         }
     
         if (energyVsConsumption.length > 0) {
-            doc.fontSize(14).font('Helvetica-Bold').text('Energy vs Consumption');
+            doc.fontSize(14).font('Helvetica-Bold').text('Hourly Production');
             doc.moveDown(0.5);
             doc.fontSize(10).font('Helvetica-Bold')
-                .text('Date', 50, doc.y, { width: 150 })
-                .text('Produced (kWh)', 200, doc.y - 12, { width: 150 })
-                .text('Consumed (kWh)', 350, doc.y - 12, { width: 150 })
-                .text('Surplus (kWh)', 450, doc.y - 12, { width: 100 });
+                .text('Hour', 50, doc.y, { width: 200 })
+                .text('Produced (kWh)', 250, doc.y - 12, { width: 200 });
 
             doc.moveDown(0.3);
             doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
@@ -168,16 +152,12 @@ const generateReport = async (req, res, next) =>{
             doc.font('Helvetica').fontSize(10);
 
             for (const row of energyVsConsumption) {
-                const date = new Date(row.day).toLocaleDateString();
-                const produced = parseFloat(row.total_produced_kwh || 0).toFixed(3);
-                const consumed = parseFloat(row.total_consumed_kwh || 0).toFixed(3);
-                const surplus = parseFloat(row.surplus_kwh || 0).toFixed(3);
+                const hour = new Date(row.hour).toLocaleString();
+                const produced = parseFloat(row.produced_kwh || 0).toFixed(3);
 
                 doc
-                .text(date, 50, doc.y, { width: 150 })
-                .text(produced, 200, doc.y - 12, { width: 150 })
-                .text(consumed, 350, doc.y - 12, { width: 150 })
-                .text(surplus, 450, doc.y - 12, { width: 100 });
+                    .text(hour, 50, doc.y, { width: 200 })
+                    .text(produced, 250, doc.y - 12, { width: 200 });
 
                 doc.moveDown(0.3);
             }

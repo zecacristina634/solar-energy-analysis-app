@@ -171,18 +171,29 @@ const getLatestSummary = async (systemId, summaryType) =>{
 
 const getDailyProduction = async (systemId, startDate, endDate) =>{
     const result = await pool.query(
-        `SELECT 
-            DATE(time_start) AS day,
-            SUM(produced_kwh) AS total_produced_kwh,
-            SUM(consumed_kwh) AS total_consumed_kwh,
-            AVG(avg_temperature_c) AS avg_temperature_c
-        FROM energy_measurements_summary
-        WHERE id_system = $1
-        AND summary_type = 'daily'
-        AND time_start >= $2
-        AND time_start <= $3
-        GROUP BY DATE(time_start)
-        ORDER BY day ASC`,
+        `SELECT date, produced_kwh, avg_temperature_c FROM (
+            SELECT
+                DATE(recorded_at AT TIME ZONE 'Europe/Bucharest') AS date,
+                ROUND(SUM(COALESCE(power_w, 0)) * 30.0 / 3600000, 4) AS produced_kwh,
+                AVG(temperature_c) AS avg_temperature_c
+            FROM energy_measurements
+            WHERE id_system = $1
+            AND DATE(recorded_at AT TIME ZONE 'Europe/Bucharest') >= $2::date
+            AND DATE(recorded_at AT TIME ZONE 'Europe/Bucharest') <= $3::date
+            GROUP BY DATE(recorded_at AT TIME ZONE 'Europe/Bucharest')
+            UNION
+            SELECT
+                DATE(time_start) AS date,
+                produced_kwh,
+                avg_temperature_c
+            FROM energy_measurements_summary
+            WHERE id_system = $1
+            AND summary_type = 'daily'
+            AND DATE(time_start) >= $2::date
+            AND DATE(time_start) <= $3::date
+            AND DATE(time_start) < CURRENT_DATE - INTERVAL '30 days'
+        ) combined
+        ORDER BY date ASC`,
         [systemId, startDate, endDate]
     );
     return result.rows;
@@ -190,16 +201,26 @@ const getDailyProduction = async (systemId, startDate, endDate) =>{
 
 const getMonthlyProduction = async (systemId, year) =>{
     const result = await pool.query(
-        `SELECT 
-            EXTRACT (MONTH FROM time_start) AS month,
-            SUM(produced_kwh) AS total_produced_kwh,
-            SUM(consumed_kwh) AS total_consumed_kwh,
-            AVG(avg_temperature_c) AS avg_temperature_c
-        FROM energy_measurements_summary
-        WHERE id_system = $1
-        AND summary_type = 'daily'
-        AND EXTRACT (YEAR FROM time_start) = $2
-        GROUP BY EXTRACT(MONTH FROM time_start)
+        `SELECT month, SUM(produced_kwh) AS produced_kwh FROM (
+            SELECT
+                DATE_TRUNC('month', recorded_at AT TIME ZONE 'Europe/Bucharest') AS month,
+                ROUND(SUM(COALESCE(power_w, 0)) * 30.0 / 3600000, 2) AS produced_kwh
+            FROM energy_measurements
+            WHERE id_system = $1
+            AND EXTRACT(YEAR FROM recorded_at AT TIME ZONE 'Europe/Bucharest') = $2
+            GROUP BY DATE_TRUNC('month', recorded_at AT TIME ZONE 'Europe/Bucharest')
+            UNION ALL
+            SELECT
+                DATE_TRUNC('month', time_start) AS month,
+                SUM(produced_kwh) AS produced_kwh
+            FROM energy_measurements_summary
+            WHERE id_system = $1
+            AND summary_type = 'daily'
+            AND EXTRACT(YEAR FROM time_start) = $2
+            AND time_start < CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY DATE_TRUNC('month', time_start)
+        ) combined
+        GROUP BY month
         ORDER BY month ASC`,
         [systemId, year]
     );
@@ -208,18 +229,27 @@ const getMonthlyProduction = async (systemId, year) =>{
 
 const getEnergyVsConsumption = async (systemId, startDate, endDate) =>{
     const result = await pool.query(
-        `SELECT 
-            DATE(time_start) AS day,
-            SUM(produced_kwh) AS total_produced_kwh,
-            SUM(consumed_kwh) AS total_consumed_kwh,
-            SUM(produced_kwh) - SUM(consumed_kwh) AS surplus_kwh
-        FROM energy_measurements_summary
-        WHERE id_system = $1
-        AND summary_type = 'daily'
-        AND time_start >= $2
-        AND time_start <= $3
-        GROUP BY DATE(time_start)
-        ORDER BY day ASC`,
+        `SELECT hour, produced_kwh FROM (
+            SELECT
+                DATE_TRUNC('hour', recorded_at AT TIME ZONE 'Europe/Bucharest') AS hour,
+                ROUND(SUM(COALESCE(power_w, 0)) * 30.0 / 3600000, 4) AS produced_kwh
+            FROM energy_measurements
+            WHERE id_system = $1
+            AND DATE(recorded_at AT TIME ZONE 'Europe/Bucharest') >= $2::date
+            AND DATE(recorded_at AT TIME ZONE 'Europe/Bucharest') <= $3::date
+            GROUP BY DATE_TRUNC('hour', recorded_at AT TIME ZONE 'Europe/Bucharest')
+            UNION
+            SELECT
+                time_start AS hour,
+                produced_kwh
+            FROM energy_measurements_summary
+            WHERE id_system = $1
+            AND summary_type = 'daily'
+            AND DATE(time_start) >= $2::date
+            AND DATE(time_start) <= $3::date
+            AND time_start < CURRENT_DATE - INTERVAL '30 days'
+        ) combined
+        ORDER BY hour ASC`,
         [systemId, startDate, endDate]
     );
     return result.rows;

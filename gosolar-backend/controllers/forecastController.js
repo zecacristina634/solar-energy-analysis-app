@@ -22,7 +22,7 @@ const fetchOpenMeteo = async(latitude, longitude) =>{
                 'shortwave_radiation'
             ].join(','),
             timezone: 'Europe/Bucharest',
-            forecast_days: 7
+            forecast_days: 9
         }
     });
 
