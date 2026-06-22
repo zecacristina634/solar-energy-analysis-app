@@ -1,12 +1,7 @@
 import axios from 'axios';
 import { getToken } from '../utils/storage';
 
-//const API_URL = 'http://192.168.1.130:3000'; //alex
-//const API_URL = 'http://10.33.87.3:3000'; //ase
-const API_URL ='http://192.168.0.147:3000'; //acasa
-//const API_URL ='http://192.168.10.236:3000'; //
-
-
+const API_URL ='https://solar-energy-analysis-app.onrender.com';
 
 const api = axios.create({
     baseURL: API_URL,
