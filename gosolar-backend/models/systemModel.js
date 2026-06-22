@@ -134,11 +134,10 @@ const getDashboardData = async (id) =>{
             em.temperature_c AS current_temperature_c,
             
             COALESCE((
-                SELECT AVG(power_w) *
-                    EXTRACT(EPOCH FROM (NOW() - DATE_TRUNC('day', NOW()))) / 3600.0 / 1000.0
+                SELECT ROUND(SUM(COALESCE(power_w, 0)) * 30.0 / 3600000, 4)
                 FROM energy_measurements
                 WHERE id_system = ps.id_system
-                AND recorded_at >= DATE_TRUNC('day', NOW())
+                AND DATE(recorded_at AT TIME ZONE 'Europe/Bucharest') = CURRENT_DATE
                 AND power_w IS NOT NULL
             ), 0) AS produced_today_kwh,
             0 AS consumed_today_kwh

@@ -16,11 +16,11 @@ const addMeasurement = async (systemId, data) =>{
         RETURNING *`,
         [
             systemId,
-            recorded_at || new Date(),
-            voltage_v || null,
-            current_a || null,
-            power_w || null,
-            temperature_c || null
+            recorded_at ?? new Date(),
+            voltage_v ?? null,
+            current_a ?? null,
+            power_w ?? null,
+            temperature_c ?? null
         ]
     );
     return result.rows[0];
@@ -54,7 +54,6 @@ const getLastMeasurement = async (systemId) =>{
         `SELECT * FROM energy_measurements
         WHERE  id_system= $1
         AND recorded_at <= NOW()
-        AND power_w IS NOT NULL
         ORDER BY recorded_at DESC
         LIMIT 1`,
         [systemId]

@@ -16,6 +16,7 @@ const generateRecommendations = async (system, userId, force = false) =>{
     const systemId = system.id_system;
 
     const latestMeasurement = await measurementModel.getLastMeasurement(systemId);
+    console.log(`[REC] systemId=${systemId} (${system.system_type}), latestMeasurement=`, latestMeasurement ? `power_w=${latestMeasurement.power_w}` : 'NULL');
     if(!latestMeasurement) return { error: 'No measurements found', recommendations: []};        
 
     const constantAppliances = await applianceModel.getConstantByUser(userId);

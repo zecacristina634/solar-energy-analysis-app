@@ -85,7 +85,6 @@ const runWeeklySummary = async () => {
 };
 
 const scheduleWeeklySummary = () => {
-    // Runs every Sunday at midnight
     cron.schedule('0 0 * * 0', runWeeklySummary, {
         timezone: 'Europe/Bucharest'
     });

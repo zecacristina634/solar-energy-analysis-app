@@ -7,10 +7,17 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <Preferences.h>
 
-const char* WIFI_SSID = "DIGI-W2Yd";
-const char* WIFI_PASSWORD = "FRD2DJaN5Y";
-const char* BACKEND_URL = "http://192.168.1.142:3000";
+//const char* WIFI_SSID = "DIGI-W2Yd";
+//const char* WIFI_PASSWORD = "FRD2DJaN5Y";
+//const char* BACKEND_URL = "http://192.168.1.142:3000";
+// const char* WIFI_SSID = "TP-Link_AEFC";
+// const char* WIFI_PASSWORD = "33036755";
+// const char* BACKEND_URL = "http://192.168.0.147:3000";
+const char* WIFI_SSID = "Jak";
+const char* WIFI_PASSWORD = "gabrielbogdan";
+const char* BACKEND_URL = "http://192.168.10.236:3000";
 
 const float POWER_SCALE = 10000.0;
 const float VOLTAGE_SCALE = 1333.0;
@@ -19,14 +26,15 @@ const float VOLTAGE_SCALE = 1333.0;
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
 #define OLED_ADDR 0x3C
-#define ONE_WIRE_BUS 4 // pinul gpio al esp la care e conectat ds18b20
+#define ONE_WIRE_BUS 4
 
-const unsigned long SEND_INTERVAL = 30000; // 30sec
+const unsigned long SEND_INTERVAL = 30000;
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 Adafruit_INA219 ina219;
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature ds18b20(&oneWire);
+Preferences preferences;
 
 bool oledOK = false;
 bool inaOK = false;
@@ -48,37 +56,54 @@ String generatePairingCode() {
   const String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   String code = "";
   randomSeed(esp_random());
-  for(int i =0; i < 6; i++){
+  for(int i = 0; i < 6; i++){
     code += chars[random(0, chars.length())];
   }
   return code;
 }
 
-void readINA219Averaged(int samples = 5){
-  float sumBus =0, sumShunt =0, sumCurrent=0, sumPower=0;
-  for(int i=0; i < samples; i++){
-    sumBus += ina219.getBusVoltage_V();
-    sumShunt += ina219.getShuntVoltage_mV();
-    sumCurrent += ina219.getCurrent_mA();
-    sumPower += ina219.getPower_mW();
+void readINA219Averaged(int samples = 5) {
+  float sumBus = 0, sumShunt = 0, sumCurrent = 0, sumPower = 0;
+  int   validSamples = 0;
+
+  for (int i = 0; i < samples; i++) {
+    float busV      = ina219.getBusVoltage_V();
+    float shuntmV   = ina219.getShuntVoltage_mV();
+    float currentmA = ina219.getCurrent_mA();
+    float powerMW   = ina219.getPower_mW();
+
+    if (busV >= 0) {
+      sumBus     += busV;
+      sumShunt   += shuntmV;
+      sumCurrent += currentmA;
+      sumPower   += powerMW;
+      validSamples++;
+    }
     delay(50);
   }
-  float avgBusV = sumBus / samples;
-  float avgShuntmV = sumShunt/ samples;
 
-  voltage_v = avgBusV + (avgShuntmV/ 1000.0) * VOLTAGE_SCALE;
-  power_w = abs((sumPower /samples) /1000.0) * POWER_SCALE;
-  current_a = power_w/ voltage_v;
+  if (validSamples == 0) return;
+
+  float avgBusV     = sumBus     / validSamples;
+  float avgShuntmV  = sumShunt   / validSamples;
+  float avgCurrentA = abs(sumCurrent / validSamples) / 1000.0;
+  float avgPowerW   = abs(sumPower   / validSamples) / 1000.0;
+
+  float realVoltage = avgBusV + (avgShuntmV / 1000.0);
+
+  voltage_v = realVoltage * VOLTAGE_SCALE;
+  current_a = avgCurrentA;
+  power_w   = avgPowerW * POWER_SCALE;
 }
 
 void readDS18B20() {
   ds18b20.requestTemperatures();
   float t = ds18b20.getTempCByIndex(0);
-  if (t== DEVICE_DISCONNECTED_C){
+  if (t == DEVICE_DISCONNECTED_C){
     dsOK = false;
   } else {
     temperature_c = t;
-    dsOK =true;
+    dsOK = true;
   }
 }
 
@@ -92,14 +117,14 @@ void connectWiFi() {
   }
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Conectare WiFi");
-  int attempts =0;
+  int attempts = 0;
   while (WiFi.status() != WL_CONNECTED && attempts < 40){
     delay(500);
     Serial.print(".");
     attempts++;
   }
   if(WiFi.status() == WL_CONNECTED){
-    wifiOK= true;
+    wifiOK = true;
     Serial.println("\nWiFi conectat!");
     if (oledOK){
       display.clearDisplay();
@@ -116,8 +141,8 @@ void connectWiFi() {
   }
 }
 
-bool sendPairingCode(String code) {
-  if (!wifiOK) return false;
+int registerOrReconnect(String code) {
+  if (!wifiOK) return -1;
   HTTPClient http;
   http.begin(String(BACKEND_URL) + "/systems/pair/register");
   http.addHeader("Content-Type", "application/json");
@@ -128,10 +153,22 @@ bool sendPairingCode(String code) {
   int httpCode = http.POST(body);
   String response = http.getString();
   http.end();
-  Serial.print("Pairing status: ");
+
+  Serial.print("Register status: ");
   Serial.println(httpCode);
   Serial.println(response);
-  return (httpCode == 200 || httpCode == 201);
+
+  if (httpCode == 200 || httpCode == 201) {
+    StaticJsonDocument<200> res;
+    deserializeJson(res, response);
+    bool alreadyPaired = res["already_paired"] | false;
+    if (alreadyPaired) {
+      systemId = res["id_system"] | -1;
+      return 1;
+    }
+    return 0;
+  }
+  return -1;
 }
 
 bool checkIfPaired(String code) {
@@ -159,10 +196,10 @@ bool sendMeasurement() {
   http.begin(String(BACKEND_URL) + "/measurements");
   http.addHeader("Content-Type", "application/json");
   StaticJsonDocument<256> doc;
-  doc["id_system"] = systemId;
-  doc["voltage_v"] = voltage_v;
-  doc["current_a"] = current_a;
-  doc["power_w"] = power_w;
+  doc["id_system"]     = systemId;
+  doc["voltage_v"]     = voltage_v;
+  doc["current_a"]     = current_a;
+  doc["power_w"]       = power_w;
   doc["temperature_c"] = temperature_c;
   String body;
   serializeJson(doc, body);
@@ -170,7 +207,23 @@ bool sendMeasurement() {
   http.end();
   Serial.print("Measurement status: ");
   Serial.println(httpCode);
+
+  if(httpCode == 404) {
+    Serial.println("System not found! Resetez NVS...");
+    preferences.begin("gosolar", false);
+    preferences.clear();
+    preferences.end();
+    delay(1000);
+    ESP.restart();
+  }
+
   return (httpCode == 201);
+}
+
+void saveToNVS() {
+  preferences.putInt("system_id", systemId);
+  preferences.putString("pair_code", pairingCode);
+  Serial.println("Salvat in NVS.");
 }
 
 void drawPairingScreen() {
@@ -204,7 +257,7 @@ void drawLiveScreen(){
   else display.println("ERR");
   display.print("Volt: "); display.print(voltage_v, 2); display.println(" V");
   display.print("Curr: "); display.print(current_a, 2); display.println(" A");
-  display.print("Pow: "); display.print(power_w, 2); display.println(" W");
+  display.print("Pow:  "); display.print(power_w, 2);  display.println(" W");
   display.print("WiFi: "); display.println(wifiOK ? "OK" : "ERR");
   display.display();
 }
@@ -216,17 +269,17 @@ void printSerialData() {
   Serial.print("WiFi: ");      Serial.println(wifiOK ? "OK" : "ERR");
   Serial.print("Temp: ");      Serial.print(temperature_c, 2); Serial.println(" C");
   Serial.print("Voltage: ");   Serial.print(voltage_v, 3);     Serial.println(" V");
-  Serial.print("Current: ");   Serial.print(current_a, 2); Serial.println(" A");
-  Serial.print("Power: ");     Serial.print(power_w, 2);   Serial.println(" W");
+  Serial.print("Current: ");   Serial.print(current_a, 2);     Serial.println(" A");
+  Serial.print("Power: ");     Serial.print(power_w, 2);       Serial.println(" W");
   Serial.println("=========================");
 }
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Wire.begin(21, 22); //pornire pinii 21 si 22 = sda si scl
+  Wire.begin(21, 22);
 
-  oledOK= display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
+  oledOK = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
   if (oledOK) {
     display.clearDisplay();
     display.setTextSize(1);
@@ -253,11 +306,37 @@ void setup() {
 
   connectWiFi();
 
-  pairingCode = generatePairingCode();
-  Serial.print("Pairing code: ");
-  Serial.println(pairingCode);
-  sendPairingCode(pairingCode);
-  drawPairingScreen();
+  preferences.begin("gosolar", false);
+  int savedId      = preferences.getInt("system_id", -1);
+  String savedCode = preferences.getString("pair_code", "");
+
+  if (savedId != -1 && savedCode != "") {
+    Serial.println("NVS: incerc reconectare...");
+    pairingCode = savedCode;
+    int result = registerOrReconnect(pairingCode);
+    if (result == 1 && systemId != -1) {
+      paired = true;
+      Serial.print("Reconectat la system ID: ");
+      Serial.println(systemId);
+      if (oledOK) {
+        display.clearDisplay();
+        display.setCursor(0, 0);
+        display.println("Reconectat!");
+        display.print("ID: ");
+        display.println(systemId);
+        display.display();
+        delay(2000);
+      }
+    }
+  }
+
+  if (!paired) {
+    pairingCode = generatePairingCode();
+    Serial.print("Cod pairing: ");
+    Serial.println(pairingCode);
+    registerOrReconnect(pairingCode);
+    drawPairingScreen();
+  }
 }
 
 void loop() {
@@ -273,6 +352,7 @@ void loop() {
     paired = checkIfPaired(pairingCode);
     if(paired){
       Serial.println("Dispozitiv conectat!");
+      saveToNVS();
       if(oledOK){
         display.clearDisplay();
         display.setCursor(0, 0);
@@ -282,7 +362,7 @@ void loop() {
         display.display();
         delay(2000);
       }
-    } else{
+    } else {
       drawPairingScreen();
     }
   }

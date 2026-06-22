@@ -66,6 +66,13 @@ const markAsUsed = async (codeValue) =>{
     return result.rows[0];
 };
 
+const resetBySystem = async (systemId) =>{
+    await pool.query(
+        `DELETE FROM pairing_codes WHERE id_system = $1`,
+        [systemId]
+    );
+};
+
 const deleteExpired = async () =>{
     const result = await pool.query(
         `DELETE FROM pairing_codes
@@ -81,5 +88,6 @@ module.exports ={
     findActiveBySystem,
     assignSystem,
     markAsUsed,
+    resetBySystem,
     deleteExpired
 };

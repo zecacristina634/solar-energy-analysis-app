@@ -39,7 +39,10 @@ export default function Recommendations() {
     try {
       const { systems } = await getSystems();
       if (systems && systems.length > 0) {
-        const activeSystem = systems.find(s => s.system_status === 'active') || systems[0];
+        const activeSystem =
+          systems.find(s => s.system_status === 'active' && s.system_type === 'real') ||
+          systems.find(s => s.system_status === 'active') ||
+          systems[0];
         setSystem(activeSystem);
       }
       const { recommendations } = await getRecommendations();
