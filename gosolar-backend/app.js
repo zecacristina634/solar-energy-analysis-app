@@ -36,6 +36,10 @@ app.use('/recommendations', recommendationRoutes);
 app.use('/forecast', forecastRoutes);
 app.use('/reports', reportRoutes);
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.get('/', (req,res)=>{
     res.json({message: 'GoSolar API is running'});
 });

@@ -114,7 +114,7 @@ const simulateMeasurement = (date, system, weatherData = {}) => {
     const zenithNoon = getZenithAngle(latitude, declination, 0);
     const IetiMax = getExtraterrestrialIrradiance(dayOfYear, zenithNoon);
 
-    const M = 1-cloudCoverage /100 *0.8; // cloudiness factor
+    const M = 1-cloudCoverage /100 *0.8;
     const Smax = IetiMax * M;
 
     const irradiance = getClouldySkyIrradiance(currentHour, sunrise, sunset, Smax, cloudCoverage);

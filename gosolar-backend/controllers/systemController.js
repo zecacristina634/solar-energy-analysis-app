@@ -127,6 +127,7 @@ const deleteSystem = async (req, res, next) =>{
         }
 
         await systemModel.deleteSystem(req.params.id, req.user.id_user);
+        await pairingModel.resetBySystem(req.params.id);
 
         res.status(200).json({message: 'System deleted successfully'});
     } catch (err){
@@ -188,15 +189,25 @@ const registerPairingCode = async (req, res, next) =>{
             return res.status(400).json({message: 'Pairing code is required'});
         }
 
-        const existing = await pairingModel.findByCode(code_value);
-        if(existing){
-            return res.status(200).json({message: 'Code already registered'});
+        const existing = await pairingModel.findByCodeAny(code_value);
+
+        if(existing && existing.is_used && existing.id_system){
+            await systemModel.updateStatus(existing.id_system, 'active');
+            return res.status(200).json({
+                message: 'Already paired',
+                id_system: existing.id_system,
+                already_paired: true
+            });
+        }
+
+        if(existing && !existing.is_used){
+            return res.status(200).json({message: 'Code already registered', already_paired: false});
         }
 
         const expiresAt = new Date(Date.now() + 5*60*1000);
         await pairingModel.create(null, code_value, expiresAt);
 
-        res.status(201).json({message: 'Pairing code registered successfully'});
+        res.status(201).json({message: 'Pairing code registered successfully', already_paired: false});
     } catch(err){
         next(err);
     }
