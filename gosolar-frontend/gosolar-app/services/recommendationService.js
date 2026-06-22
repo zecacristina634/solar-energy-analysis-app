@@ -20,6 +20,11 @@ export const generateRecommendations = async (systemId) =>{
     return response.data;
 };
 
+export const getAutoRecommendationStatus = async (systemId) => {
+    const response = await api.get(`/recommendations/auto/status/${systemId}`);
+    return response.data;
+};
+
 export const startAutoRecommendations = async (systemId) =>{
     const response = await api.post(`/recommendations/auto/start/${systemId}`);
     return response.data;
