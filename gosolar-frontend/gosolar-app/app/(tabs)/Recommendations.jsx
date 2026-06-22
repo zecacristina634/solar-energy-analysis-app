@@ -10,6 +10,7 @@ import { useAuth } from '../../store/authStore';
 import {
   getRecommendations, generateRecommendations,
   startAutoRecommendations, stopAutoRecommendations,
+  getAutoRecommendationStatus,
   markAsRead, markAllAsRead, deleteRecommendation
 } from '../../services/recommendationService';
 import { getSystems } from '../../services/systemService';
@@ -38,15 +39,20 @@ export default function Recommendations() {
   const loadData = useCallback(async () => {
     try {
       const { systems } = await getSystems();
+      let activeSystem = null;
       if (systems && systems.length > 0) {
-        const activeSystem =
+        activeSystem =
           systems.find(s => s.system_status === 'active' && s.system_type === 'real') ||
           systems.find(s => s.system_status === 'active') ||
           systems[0];
         setSystem(activeSystem);
       }
-      const { recommendations } = await getRecommendations();
+      const [{ recommendations }, statusData] = await Promise.all([
+        getRecommendations(),
+        activeSystem ? getAutoRecommendationStatus(activeSystem.id_system).catch(() => ({ running: false })) : Promise.resolve({ running: false }),
+      ]);
       setRecommendations(recommendations || []);
+      setAutoRunning(statusData.running);
     } catch (err) {
       console.error('Recommendations load error:', err.message);
     } finally {

@@ -172,6 +172,19 @@ const stopAutoRecommendations = async (req, res, next) =>{
     }
 };
 
+const getAutoStatus = async (req, res, next) => {
+    try {
+        const system = await systemModel.getById(req.params.systemId, req.user.id_user);
+        if (!system) {
+            return res.status(404).json({ message: 'System not found' });
+        }
+        const running = recommendationJob.isRecommendationJobRunning(system.id_system);
+        res.status(200).json({ running });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports ={
     getRecommendations,
     getRecommendationsBySystem,
@@ -184,5 +197,6 @@ module.exports ={
     deleteOldRecommendations,
     deleteRecommendation,
     startAutoRecommendations,
-    stopAutoRecommendations
+    stopAutoRecommendations,
+    getAutoStatus
 };

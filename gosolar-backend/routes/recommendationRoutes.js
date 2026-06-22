@@ -12,6 +12,7 @@ router.delete('/old', authMiddleware, recommendationController.deleteOldRecommen
 router.delete('/:id', authMiddleware, recommendationController.deleteRecommendation);
 router.post('/auto/start/:systemId', authMiddleware, recommendationController.startAutoRecommendations);
 router.post('/auto/stop/:systemId', authMiddleware, recommendationController.stopAutoRecommendations);
+router.get('/auto/status/:systemId', authMiddleware, recommendationController.getAutoStatus);
 router.get('/', authMiddleware, recommendationController.getRecommendations);
 router.get('/:id', authMiddleware, recommendationController.getRecommendationById);
 router.patch('/:id/read', authMiddleware, recommendationController.markAsRead);
