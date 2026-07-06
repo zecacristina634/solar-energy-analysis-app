@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getToken } from '../utils/storage';
+import { triggerLogout } from '../store/authStore';
 
 const API_URL ='https://solar-energy-analysis-app.onrender.com';
 
@@ -27,6 +28,9 @@ api.interceptors.response.use(
     (error) =>{
         if(error.response){
             console.error('API Error:', error.response.status, error.response.data);
+            if(error.response.status === 401){
+                triggerLogout();
+            }
         } else if(error.request){
             console.error('Network Error:', error.message);
         }
