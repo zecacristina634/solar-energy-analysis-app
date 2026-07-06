@@ -5,19 +5,14 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <Preferences.h>
 
-//const char* WIFI_SSID = "DIGI-W2Yd";
-//const char* WIFI_PASSWORD = "FRD2DJaN5Y";
-//const char* BACKEND_URL = "http://192.168.1.142:3000";
-// const char* WIFI_SSID = "TP-Link_AEFC";
-// const char* WIFI_PASSWORD = "33036755";
-// const char* BACKEND_URL = "http://192.168.0.147:3000";
-const char* WIFI_SSID = "Jak";
-const char* WIFI_PASSWORD = "gabrielbogdan";
-const char* BACKEND_URL = "http://192.168.10.236:3000";
+const char* WIFI_SSID = "TP-Link_AEFC";
+const char* WIFI_PASSWORD = "33036755";
+const char* BACKEND_URL = "https://solar-energy-analysis-app.onrender.com";
 
 const float POWER_SCALE = 10000.0;
 const float VOLTAGE_SCALE = 1333.0;
@@ -143,8 +138,11 @@ void connectWiFi() {
 
 int registerOrReconnect(String code) {
   if (!wifiOK) return -1;
+  WiFiClientSecure client;
+  client.setInsecure();
   HTTPClient http;
-  http.begin(String(BACKEND_URL) + "/systems/pair/register");
+  http.begin(client, String(BACKEND_URL) + "/systems/pair/register");
+  http.setTimeout(20000);
   http.addHeader("Content-Type", "application/json");
   StaticJsonDocument<200> doc;
   doc["code_value"] = code;
@@ -173,8 +171,11 @@ int registerOrReconnect(String code) {
 
 bool checkIfPaired(String code) {
   if(!wifiOK) return false;
+  WiFiClientSecure client;
+  client.setInsecure();
   HTTPClient http;
-  http.begin(String(BACKEND_URL) + "/systems/pair/status/" + code);
+  http.begin(client, String(BACKEND_URL) + "/systems/pair/status/" + code);
+  http.setTimeout(20000);
   int httpCode = http.GET();
   String response = http.getString();
   http.end();
@@ -192,8 +193,11 @@ bool checkIfPaired(String code) {
 
 bool sendMeasurement() {
   if(!wifiOK || systemId == -1) return false;
+  WiFiClientSecure client;
+  client.setInsecure();
   HTTPClient http;
-  http.begin(String(BACKEND_URL) + "/measurements");
+  http.begin(client, String(BACKEND_URL) + "/measurements");
+  http.setTimeout(20000);
   http.addHeader("Content-Type", "application/json");
   StaticJsonDocument<256> doc;
   doc["id_system"]     = systemId;

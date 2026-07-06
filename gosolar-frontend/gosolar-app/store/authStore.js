@@ -3,6 +3,10 @@ import { getToken, getUser, saveToken, saveUser, clearStorage } from "../utils/s
 
 const AuthContext = createContext(null);
 
+let logoutHandler = null;
+export const registerLogoutHandler = (fn) => { logoutHandler = fn; };
+export const triggerLogout = () => { if (logoutHandler) logoutHandler(); };
+
 export const AuthProvider = ({children}) =>{
     const [token, setToken] = useState(null);
     const [user, setUser] = useState(null);
@@ -38,6 +42,10 @@ export const AuthProvider = ({children}) =>{
         setToken(null);
         setUser(null);
     };
+
+    useEffect(() => {
+        registerLogoutHandler(logout);
+    }, []);
 
     const updateUser = async (updatedUser) =>{
         await saveUser(updatedUser);
