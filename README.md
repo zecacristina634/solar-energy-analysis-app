@@ -25,6 +25,7 @@ When no prototype is connected, production is simulated based on:
 - Cloud coverage adjustments
 - Panel efficiency and performance ratio
 - Temperature coefficient
+  
 Reference: [MDPI – Energies 8(7):7058](https://www.mdpi.com/1996-1073/8/7/7058)
  
 ## Hardware prototype
